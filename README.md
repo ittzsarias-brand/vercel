@@ -4,23 +4,22 @@ A Next.js and TypeScript business dashboard preview using Geist Sans/Geist Mono 
 
 ## Current status
 
-- Responsive dashboard interface for an owner and two employees.
+- Responsive dashboard interface for a single owner account.
 - Firebase email/password sign-in screen and password-reset flow.
 - Firebase app/Auth/Firestore initialization through environment variables.
-- Starter Firestore security rules; the vault collection is owner-only.
-- Accounting, business activity, deliveries, inventory, notes, and the owner-only vault use live Firestore records with real-time updates.\n- Overview metrics and charts remain demo/sample figures; they are not calculated from saved records yet.\n- Admin can assign Firestore roles to existing Firebase Authentication accounts by UID.
+- Simplified single-owner workflow; no employee or admin management screen.
+- Accounting, business activity, deliveries, inventory, notes, and the vault use live Firestore records with real-time updates.
+- Overview metrics and charts remain demo/sample figures; they are not calculated from saved records yet.
 
 ## Configure Firebase
 
 1. In Firebase Console, open project `vercel-b8f3c` and register a Web App if you have not already.
 2. Go to **Authentication → Sign-in method** and enable **Email/Password**.
-3. Under **Authentication → Users**, create the owner account with an email and password. Create employee accounts here too when ready.
+3. Under **Authentication → Users**, create your owner account with an email and password. Do not create employee accounts if you want this workspace to remain single-owner.
 4. Create a **Cloud Firestore** database.
-5. Before publishing `firestore.rules`, create a document at `users/{OWNER_AUTH_UID}` in Firestore. Use the exact UID shown in Authentication for the owner account. Set fields: `role` (string) = `owner`, and `email` (string) = the owner's email.
-6. Create a profile document for each employee at `users/{EMPLOYEE_AUTH_UID}` with `role` (string) = `employee` and their email. Only do this after the owner profile is set up, because the rules reserve profile management for the owner.
-7. Publish the included `firestore.rules` in Firestore → Rules. Review and test them before using real business data.
-8. Copy `.env.example` to `.env.local` and add the Firebase web app config values. Never commit `.env.local`, service-account keys, or passwords.
-9. In Vercel project settings, add the same `NEXT_PUBLIC_FIREBASE_*` environment variables for Preview and Production, then redeploy.
+5. Publish the included `firestore.rules` in Firestore → Rules. The current rules allow any signed-in Firebase account to access workspace collections, so keep only your own account in Firebase Authentication for a single-owner setup.
+6. Copy `.env.example` to `.env.local` and add the Firebase web app config values. Never commit `.env.local`, service-account keys, or passwords.
+7. In Vercel project settings, add the same `NEXT_PUBLIC_FIREBASE_*` environment variables for Preview and Production, then redeploy.
 
 ## Run locally
 
@@ -35,4 +34,4 @@ Open http://localhost:3000.
 
 ## Important security notes
 
-Firebase web configuration is designed to be used by client applications; it is not a substitute for security rules. Access must be enforced by Firebase Authentication and Firestore Security Rules, never only by hiding buttons in the UI. The starter rules give owner and employee profiles access to the shared operational collections, while only the owner can access `vault`. Update the rules if employees need different module permissions. Do not store real business data until you have tested the rules and account roles.
+Firebase web configuration is designed to be used by client applications; it is not a substitute for security rules. Access must be enforced by Firebase Authentication and Firestore Security Rules, never only by hiding buttons in the UI. The current rules allow any authenticated Firebase user to access the operational collections and vault. Keep only your own account in Firebase Authentication to maintain the intended single-owner setup. Do not store real business data until you have tested the rules and account roles.
