@@ -91,7 +91,7 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
         await setDoc(doc(db,"users",profileUid.trim()), { email: profileEmail.trim(), role: profileRole, updatedAt: serverTimestamp() }, { merge: true });
         setProfileUid(""); setProfileEmail(""); setProfileRole("employee");
       } else {
-        const data: Record<string,unknown> = { ...values, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), createdBy: uid, createdByEmail: email };
+        const data: Record<string,unknown> = { ...values, updatedAt: serverTimestamp() };
         if (active === "Accounting") {
           const amount = Number(values.amount);
           if (!Number.isFinite(amount) || amount < 0) throw new Error("Enter a valid non-negative amount.");
@@ -103,7 +103,7 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
           data.quantity = quantity;
         }
         if (editingId) await updateDoc(doc(db, collectionName, editingId), { ...data, updatedAt: serverTimestamp() });
-        else await addDoc(collection(db, collectionName), data);
+        else await addDoc(collection(db, collectionName), { ...data, createdAt: serverTimestamp(), createdBy: uid, createdByEmail: email });
         setValues({});
         setEditingId(null);
       }
