@@ -37,3 +37,5 @@
 .profile-manager .team-row>div:nth-child(2){flex:1;min-width:0;overflow-wrap:anywhere}
 .live-module>.demo-note{margin-top:22px}
 @media(max-width:600px){.live-form{grid-template-columns:1fr;padding:13px}.live-form label{grid-column:1/-1}.live-list-head{align-items:flex-start}.live-record{gap:8px}.live-record-content>small{font-size:10px}}
+
+.record-actions{display:flex;gap:4px;flex-shrink:0}.record-actions .icon:hover{background:#f0f5f1;color:#237a50}
