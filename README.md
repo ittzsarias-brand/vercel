@@ -8,7 +8,7 @@ A Next.js and TypeScript business dashboard preview using Geist Sans/Geist Mono 
 - Firebase email/password sign-in screen and password-reset flow.
 - Firebase app/Auth/Firestore initialization through environment variables.
 - Starter Firestore security rules; the vault collection is owner-only.
-- Dashboard figures and records are still sample UI state. Business modules are not yet connected to Firestore.
+- Accounting, business activity, deliveries, inventory, notes, and the owner-only vault use live Firestore records with real-time updates.\n- Overview metrics and charts remain demo/sample figures; they are not calculated from saved records yet.\n- Admin can assign Firestore roles to existing Firebase Authentication accounts by UID.
 
 ## Configure Firebase
 
