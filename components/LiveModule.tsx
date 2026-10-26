@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Plus, Trash2, ShieldCheck, RefreshCw } from "lucide-react";
+import { Plus, Trash2, ShieldCheck, RefreshCw, Pencil } from "lucide-react";
 
 type ModuleName = "Accounting" | "Business" | "Deliveries" | "Inventory" | "Notes" | "Private vault" | "Admin";
 type Row = { id: string; [key: string]: unknown };
@@ -34,7 +34,7 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);\n  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string,string>>({});
   const [profileRows, setProfileRows] = useState<Row[]>([]);
@@ -109,7 +109,7 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
       setError(e instanceof Error ? e.message : "Could not save the record.");
     } finally { setSaving(false); }
   }
-  async function remove(row: Row) {
+  function edit(row: Row) {\n    const next: Record<string,string> = {};\n    for (const field of moduleFields) {\n      const value = row[field.key];\n      if (value !== undefined && value !== null) next[field.key] = String(value);\n    }\n    setValues(next); setEditingId(row.id); setFormOpen(true);\n  }\n  async function remove(row: Row) {
     if (!window.confirm("Delete this record permanently?")) return;
     try { await deleteDoc(doc(db, collectionName, row.id)); }
     catch { setError("Delete failed. Check your role and Firestore rules."); }
@@ -127,9 +127,9 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
       {isOwner && <><button className="primary" onClick={()=>setFormOpen(v=>!v)}><Plus size={15}/> Add user profile</button>{formOpen&&<form className="live-form" onSubmit={submit}><label>Firebase Authentication UID<input value={profileUid} onChange={e=>setProfileUid(e.target.value)} required placeholder="Copy UID from Authentication → Users"/></label><label>Email<input type="email" value={profileEmail} onChange={e=>setProfileEmail(e.target.value)} required placeholder="employee@company.com"/></label><label>Role<select value={profileRole} onChange={e=>setProfileRole(e.target.value)}><option value="employee">Employee</option><option value="owner">Owner</option></select></label><div className="modal-actions"><button type="button" className="quiet" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primary" disabled={saving}>{saving?"Saving…":"Save profile"}</button></div></form>}</>}
       {!isOwner&&<div className="demo-note">Only the owner can change workspace roles.</div>}
     </div> : <>
-      <div className="panel-head live-list-head"><div><h2>Saved records</h2><p>{visibleRows.length} record(s) · live sync</p></div><button className="primary" onClick={()=>{setValues({});setFormOpen(v=>!v)}}><Plus size={15}/> Add record</button></div>
-      {formOpen&&<form className="live-form" onSubmit={submit}>{moduleFields.map(f=><label key={f.key}>{f.label}{f.key==="body"||f.key==="details"||f.key==="description"?<textarea rows={3} value={values[f.key]||""} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))} placeholder={f.placeholder} required={f.key!=="description"}/>:<input type={f.key==="amount"||f.key==="quantity"?"number":"text"} min={f.key==="amount"||f.key==="quantity"?0:undefined} step={f.key==="amount"?"0.01":f.key==="quantity"?"1":undefined} value={values[f.key]||""} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))} placeholder={f.placeholder} required/>}</label>)}<div className="modal-actions"><button type="button" className="quiet" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primary" disabled={saving}>{saving?"Saving…":"Save record"}</button></div></form>}
-      {loading?<p className="live-empty">Loading records…</p>:visibleRows.length===0?<div className="live-empty"><b>No records yet</b><p>Add your first record above. New records will appear for other authorized users too.</p></div>:<div className="live-records">{visibleRows.map(row=><article className="live-record" key={row.id}><div className="live-record-content"><b>{readable(row.title||row.name||row.orderId||row.type||"Record")}</b><small>{Object.entries(row).filter(([k,v])=>!["id","createdAt","updatedAt","createdBy","createdByEmail"].includes(k)&&v!==""&&v!==null&&v!==undefined).map(([k,v])=>k==="title"||k==="name"||k==="orderId"||k==="type"?null:<span key={k}><strong>{k.replace(/[A-Z]/g, m => " " + m.toLowerCase()).replace(/^./,c=>c.toUpperCase())}:</strong> {readable(v)}　</span>)}</small><small className="record-meta">Added by {readable(row.createdByEmail)||"workspace user"} · {readable(row.createdAt)||"just now"}</small></div><button className="icon" onClick={()=>remove(row)} aria-label="Delete record" title="Delete record"><Trash2 size={15}/></button></article>)}</div>}
+      <div className="panel-head live-list-head"><div><h2>Saved records</h2><p>{visibleRows.length} record(s) · live sync</p></div><button className="primary" onClick={()=>{setValues({});setEditingId(null);setFormOpen(v=>!v)}}><Plus size={15}/> Add record</button></div>
+      {formOpen&&<form className="live-form" onSubmit={submit}>{moduleFields.map(f=><label key={f.key}>{f.label}{f.key==="body"||f.key==="details"||f.key==="description"?<textarea rows={3} value={values[f.key]||""} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))} placeholder={f.placeholder} required={f.key!=="description"}/>:<input type={f.key==="amount"||f.key==="quantity"?"number":"text"} min={f.key==="amount"||f.key==="quantity"?0:undefined} step={f.key==="amount"?"0.01":f.key==="quantity"?"1":undefined} value={values[f.key]||""} onChange={e=>setValues(v=>({...v,[f.key]:e.target.value}))} placeholder={f.placeholder} required/>}</label>)}<div className="modal-actions"><button type="button" className="quiet" onClick={()=>setFormOpen(false)}>Cancel</button><button className="primary" disabled={saving}>{saving?"Saving…":editingId?"Save changes":"Save record"}</button></div></form>}
+      {loading?<p className="live-empty">Loading records…</p>:visibleRows.length===0?<div className="live-empty"><b>No records yet</b><p>Add your first record above. New records will appear for other authorized users too.</p></div>:<div className="live-records">{visibleRows.map(row=><article className="live-record" key={row.id}><div className="live-record-content"><b>{readable(row.title||row.name||row.orderId||row.type||"Record")}</b><small>{Object.entries(row).filter(([k,v])=>!["id","createdAt","updatedAt","createdBy","createdByEmail"].includes(k)&&v!==""&&v!==null&&v!==undefined).map(([k,v])=>k==="title"||k==="name"||k==="orderId"||k==="type"?null:<span key={k}><strong>{k.replace(/[A-Z]/g, m => " " + m.toLowerCase()).replace(/^./,c=>c.toUpperCase())}:</strong> {readable(v)}　</span>)}</small><small className="record-meta">Added by {readable(row.createdByEmail)||"workspace user"} · {readable(row.createdAt)||"just now"}</small></div><div className="record-actions"><button className="icon" onClick={()=>edit(row)} aria-label="Edit record" title="Edit record"><Pencil size={15}/></button><button className="icon" onClick={()=>remove(row)} aria-label="Delete record" title="Delete record"><Trash2 size={15}/></button></div></article>)}</div>}
     </>}
     <div className="demo-note"><ShieldCheck size={15}/> Signed in as {email} · Role: {role} · Changes are stored in Firebase.</div>
   </section>;
