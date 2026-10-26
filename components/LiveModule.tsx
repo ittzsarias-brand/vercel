@@ -58,7 +58,14 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
     if (role === "loading" || role === "unassigned") { setLoading(false); return; }
     if (active === "Private vault" && role !== "owner") { setRows([]); setLoading(false); return; }
     setLoading(true); setError("");
-    if (isAdmin && !isOwner) {\n      const unsubscribeProfile = onSnapshot(doc(db, "users", uid), snap => {\n        setProfileRows(snap.exists() ? [{ id: snap.id, ...snap.data() } as Row] : []);\n        setLoading(false);\n      }, () => { setError("Could not load your profile. Ask the owner to check your Firestore role."); setLoading(false); });\n      return unsubscribeProfile;\n    }\n    const unsubscribe = onSnapshot(collection(db, collectionName), snap => {
+    if (isAdmin && !isOwner) {
+      const unsubscribeProfile = onSnapshot(doc(db, "users", uid), snap => {
+        setProfileRows(snap.exists() ? [{ id: snap.id, ...snap.data() } as Row] : []);
+        setLoading(false);
+      }, () => { setError("Could not load your profile. Ask the owner to check your Firestore role."); setLoading(false); });
+      return unsubscribeProfile;
+    }
+    const unsubscribe = onSnapshot(collection(db, collectionName), snap => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Row));
       data.sort((a,b) => {
         const time = (x: Row) => {
@@ -71,7 +78,7 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
       setLoading(false);
     }, () => { setError("Could not load records. Check that your user profile and Firestore security rules are set up."); setLoading(false); });
     return unsubscribe;
-  }, [active, collectionName, isAdmin, role]);
+  }, [active, collectionName, isAdmin, isOwner, role, uid]);
 
   const visibleRows = useMemo(() => rows, [rows]);
   async function submit(e: FormEvent) {
