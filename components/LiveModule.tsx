@@ -34,7 +34,8 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [formOpen, setFormOpen] = useState(false);\n  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string,string>>({});
   const [profileRows, setProfileRows] = useState<Row[]>([]);
@@ -101,15 +102,25 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
           if (!Number.isInteger(quantity) || quantity < 0) throw new Error("Quantity must be a whole number, zero or higher.");
           data.quantity = quantity;
         }
-        await addDoc(collection(db, collectionName), data);
+        if (editingId) await updateDoc(doc(db, collectionName, editingId), { ...data, updatedAt: serverTimestamp() });
+        else await addDoc(collection(db, collectionName), data);
         setValues({});
+        setEditingId(null);
       }
       setFormOpen(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save the record.");
     } finally { setSaving(false); }
   }
-  function edit(row: Row) {\n    const next: Record<string,string> = {};\n    for (const field of moduleFields) {\n      const value = row[field.key];\n      if (value !== undefined && value !== null) next[field.key] = String(value);\n    }\n    setValues(next); setEditingId(row.id); setFormOpen(true);\n  }\n  async function remove(row: Row) {
+  function edit(row: Row) {
+    const next: Record<string,string> = {};
+    for (const field of moduleFields) {
+      const value = row[field.key];
+      if (value !== undefined && value !== null) next[field.key] = String(value);
+    }
+    setValues(next); setEditingId(row.id); setFormOpen(true);
+  }
+  async function remove(row: Row) {
     if (!window.confirm("Delete this record permanently?")) return;
     try { await deleteDoc(doc(db, collectionName, row.id)); }
     catch { setError("Delete failed. Check your role and Firestore rules."); }
