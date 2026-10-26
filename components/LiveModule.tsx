@@ -43,8 +43,8 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
   const [profileRole, setProfileRole] = useState("employee");
   const isAdmin = active === "Admin";
   const isOwner = role === "owner";
-  const moduleFields = isAdmin ? [] : fields[active];
-  const collectionName = isAdmin ? "users" : collections[active as Exclude<ModuleName,"Admin">];
+  const moduleFields = active === "Admin" ? [] : fields[active];
+  const collectionName = active === "Admin" ? "users" : collections[active];
 
   useEffect(() => {
     let alive = true;
@@ -58,7 +58,7 @@ export default function LiveModule({ active, uid, email }: { active: ModuleName;
     if (role === "loading" || role === "unassigned") { setLoading(false); return; }
     if (active === "Private vault" && role !== "owner") { setRows([]); setLoading(false); return; }
     setLoading(true); setError("");
-    const unsubscribe = onSnapshot(collection(db, collectionName), snap => {
+    if (isAdmin && !isOwner) {\n      const unsubscribeProfile = onSnapshot(doc(db, "users", uid), snap => {\n        setProfileRows(snap.exists() ? [{ id: snap.id, ...snap.data() } as Row] : []);\n        setLoading(false);\n      }, () => { setError("Could not load your profile. Ask the owner to check your Firestore role."); setLoading(false); });\n      return unsubscribeProfile;\n    }\n    const unsubscribe = onSnapshot(collection(db, collectionName), snap => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Row));
       data.sort((a,b) => {
         const time = (x: Row) => {
