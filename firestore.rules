@@ -4,48 +4,34 @@ service cloud.firestore {
     function signedIn() {
       return request.auth != null;
     }
-    function hasUserProfile() {
-      return signedIn() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-    function role() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
-    }
-    function isOwner() {
-      return hasUserProfile() && role() == 'owner';
-    }
-    function isTeamMember() {
-      return hasUserProfile() && role() in ['owner', 'employee'];
-    }
 
-    // Create the first owner profile in the Firebase Console before publishing these rules.
-    match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || isOwner());
-      allow create, update, delete: if isOwner();
-    }
-
+    // This workspace is being used as a single-owner account.
+    // Only authenticated Firebase users can access workspace records.
+    // Keep only the owner's account in Firebase Authentication.
     match /accounting/{recordId} {
-      allow read, create, update, delete: if isTeamMember();
+      allow read, create, update, delete: if signedIn();
     }
     match /business/{recordId} {
-      allow read, create, update, delete: if isTeamMember();
+      allow read, create, update, delete: if signedIn();
     }
     match /deliveries/{recordId} {
-      allow read, create, update, delete: if isTeamMember();
+      allow read, create, update, delete: if signedIn();
     }
     match /inventory/{recordId} {
-      allow read, create, update, delete: if isTeamMember();
+      allow read, create, update, delete: if signedIn();
     }
     match /notes/{noteId} {
-      allow read, create, update, delete: if isTeamMember();
+      allow read, create, update, delete: if signedIn();
     }
-
-    // Restricted to the owner. Employees cannot read or write vault records.
     match /vault/{recordId} {
-      allow read, create, update, delete: if isOwner();
+      allow read, create, update, delete: if signedIn();
     }
 
-    // Deny access to every collection not explicitly listed above.
+    // No role-management or user-profile collection is used.
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
