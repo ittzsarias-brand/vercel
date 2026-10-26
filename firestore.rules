@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function hasUserProfile() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isOwner() {
+      return hasUserProfile() && role() == 'owner';
+    }
+    function isTeamMember() {
+      return hasUserProfile() && role() in ['owner', 'employee'];
+    }
+
+    // Create the first owner profile in the Firebase Console before publishing these rules.
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isOwner());
+      allow create, update, delete: if isOwner();
+    }
+
+    match /accounting/{recordId} {
+      allow read, create, update, delete: if isTeamMember();
+    }
+    match /business/{recordId} {
+      allow read, create, update, delete: if isTeamMember();
+    }
+    match /deliveries/{recordId} {
+      allow read, create, update, delete: if isTeamMember();
+    }
+    match /inventory/{recordId} {
+      allow read, create, update, delete: if isTeamMember();
+    }
+    match /notes/{noteId} {
+      allow read, create, update, delete: if isTeamMember();
+    }
+
+    // Restricted to the owner. Employees cannot read or write vault records.
+    match /vault/{recordId} {
+      allow read, create, update, delete: if isOwner();
+    }
+
+    // Deny access to every collection not explicitly listed above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
