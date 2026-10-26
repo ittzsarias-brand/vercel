@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, type User } from "firebase/auth";
-import { auth } from "./lib/firebase";
+import { auth } from "../lib/firebase";
 import { Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, Boxes, BriefcaseBusiness, Check, ChevronDown, CreditCard, FileText, LayoutDashboard, LockKeyhole, LogOut, Menu, MoreHorizontal, Package, Plus, Search, ShieldCheck, Truck, Wallet, X } from "lucide-react";
 type Section = "Overview" | "Accounting" | "Business" | "Deliveries" | "Inventory" | "Notes" | "Private vault" | "Admin";
 const nav: {label:Section;icon:typeof LayoutDashboard;group:string}[] = [{label:"Overview",icon:LayoutDashboard,group:"WORKSPACE"},{label:"Accounting",icon:Wallet,group:"WORKSPACE"},{label:"Business",icon:BriefcaseBusiness,group:"WORKSPACE"},{label:"Deliveries",icon:Truck,group:"OPERATIONS"},{label:"Inventory",icon:Boxes,group:"OPERATIONS"},{label:"Notes",icon:FileText,group:"WORKSPACE"},{label:"Private vault",icon:LockKeyhole,group:"SECURITY"},{label:"Admin",icon:ShieldCheck,group:"SECURITY"}];
